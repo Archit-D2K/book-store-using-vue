@@ -7,7 +7,7 @@
         :book="book"
         @edit="editBook"
         @delete="deleteBook"
-        style="margin-right: 1rem;width: 24rem ;margin-top: 3rem ;"
+        style="margin-right: 1rem;width: 20rem ; margin-top: 3rem ;padding: 1rem;"
       />
     </div>
     <div v-else class="text-center text-gray-500">

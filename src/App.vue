@@ -6,7 +6,7 @@ import {Button, Badge} from 'frappe-ui'
   <router-view></router-view>
 </template>
 
-<style scoped> 
+<style scoped>
 header {
   line-height: 1.5;
 }

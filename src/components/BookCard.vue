@@ -1,6 +1,6 @@
 <template>
-  <div class="book-card bg-white w-[15rem] rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-    <img :src="book.image" :alt="book.title" class="book-image w-[17rem] h-48 object-cover transition-transform duration-300" />
+  <div class="book-card bg-white bg-opacity-10 w-[15rem] rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <img :src="book.image" :alt="book.title" class="book-image w-38 h-[200] object-cover transition-transform duration-300" />
     <div class="p-4">
       <h3 class="text-xl font-semibold mb-2">{{ book.title }}</h3>
       <p class="text-gray-600 text-md mb-2">{{ book.genre }}</p>

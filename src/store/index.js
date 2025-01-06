@@ -12,10 +12,22 @@ const axiosInstance = axios.create({
   }
 });
 
+axiosInstance.interceptors.request.use(config => {
+  // Add token to headers if exists
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user && user.token) {
+    config.headers.Authorization = `Bearer ${user.token}`;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
 const store = createStore({
   state: {
     user: JSON.parse(localStorage.getItem('user')) || null,
     books: [],
+    error: null,
   },
   mutations: {
     setUser(state, user) {
@@ -29,6 +41,9 @@ const store = createStore({
     setBooks(state, books) {
       state.books = books;
     },
+    setError(state, error) {
+      state.error = error;
+    }
   },
   actions: {
     login({ commit }, userData) {
@@ -43,6 +58,7 @@ const store = createStore({
         commit('setBooks', response.data);
       } catch (error) {
         console.error('Error fetching books:', error);
+        commit('setError', error.message);
         throw error;
       }
     },
@@ -54,10 +70,21 @@ const store = createStore({
         console.error('Error deleting book:', error);
         throw error;
       }
+    },
+    async updateBook({ dispatch }, { bookId, bookData }) {
+      try {
+        await axiosInstance.put(`/books/${bookId}`, bookData);
+        await dispatch('fetchBooks');
+      } catch (error) {
+        console.error('Error updating book:', error);
+        throw error;
+      }
     }
   },
   getters: {
-    isAuthenticated: (state) => !!state.user
+    isAuthenticated: (state) => !!state.user,
+    getBooks: (state) => state.books,
+    getError: (state) => state.error
   }
 });
 

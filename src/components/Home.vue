@@ -1,7 +1,7 @@
 <template>
-  <div class="w-[100vw] flex flex-col gap-5 h-screen ">
+  <div ref="vantaContainer" class="w-[100vw] flex flex-col gap-5 h-screen">
     <Navbar />
-    <div class="flex  mx-auto justify-center gap-5 mt-8">
+    <div class="flex mx-auto justify-center gap-5 mt-8">
       <h2 class="text-xl font-semibold">Add a Book</h2>
       <div>
         <Button @click="openDialog()" variant="solid" theme="green">Add New Book</Button>
@@ -24,13 +24,11 @@
               </div>
               <div class="flex items-center gap-5">
                 <p class="w-32">Book Genre</p>
-                <div class="flex-1">
-                  <Select
-                    :options="genres"
-                    v-model="bookGenre"
-                    class="w-full"
-                  />
-                </div>
+                <Select
+                  :options="genres"
+                  v-model="bookGenre"
+                  class="w-full"
+                />
               </div>
               <div class="flex items-center gap-5">
                 <p class="w-32">Description</p>
@@ -51,16 +49,9 @@
                   class="flex-1"
                 />
               </div>
-              <div class="flex items-center gap-5">
+              <div class="flex items-center gap-5 ">
                 <p class="w-32">Book Image</p>
-                <FileUploader
-                  :fileTypes="['image/*']"
-                  @success="handleFileUpload"
-                >
-                  <template #default="{ openFileSelector }">
-                    <Button @click="openFileSelector">Upload Image</Button>
-                  </template>
-                </FileUploader>
+                <ImageUpload  @image-uploaded="onImageUploaded" />
               </div>
             </div>
           </template>
@@ -71,9 +62,7 @@
         </Dialog>
       </div>
     </div>
-    
-    <!-- Books Display Section -->
-    <div class="  mx-auto gap-5 ">
+    <div class="mx-auto gap-5">
       <Books @edit="openDialog" />
     </div>
   </div>
@@ -83,11 +72,11 @@
 import axios from 'axios';
 import { mapActions, mapState } from 'vuex';
 import Navbar from "./Navbar.vue";
-import { TextInput, Dialog, Button, Select, FileUploader } from "frappe-ui";
+import { TextInput, Dialog, Button, Select } from "frappe-ui";
 import Books from './Books.vue';
 import BIRDS from 'vanta/dist/vanta.birds.min';
-
-
+import { onMounted, onBeforeUnmount, ref } from 'vue';
+import ImageUpload from './ImageUpload.vue';
 
 export default {
   name: "Home",
@@ -97,8 +86,43 @@ export default {
     Button,
     TextInput,
     Select,
-    FileUploader,
-    Books
+    Books,
+    ImageUpload
+  },
+  setup() {
+    const vantaEffect = ref(null);
+    const vantaContainer = ref(null);
+
+    onMounted(() => {
+      if (!vantaEffect.value) {
+        vantaEffect.value = BIRDS({
+          el: vantaContainer.value,
+          THREE: THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          scale: 1.00,
+          wingSpan: 40.00,
+          scaleMobile: 1.00,
+          backgroundColor: 0xdceef2,
+          color2: 0x80a4a4,
+          birdSize: 1.20,
+          quantity: 3.00
+        });
+      }
+    });
+
+    onBeforeUnmount(() => {
+      if (vantaEffect.value) {
+        vantaEffect.value.destroy();
+      }
+    });
+
+    return {
+      vantaContainer,
+    };
   },
 
   data() {
@@ -126,9 +150,9 @@ export default {
     ...mapState(['books']),
   },
   methods: {
-    ...mapActions(['fetchBooks']),
-    handleFileUpload(file) {
-      this.bookImage = file;
+    ...mapActions(['fetchBooks', 'updateBook']),
+    onImageUploaded(imageUrl) {
+      this.bookImage = imageUrl; // Store the uploaded image URL
     },
     openDialog(book = null) {
       if (book) {
@@ -137,7 +161,7 @@ export default {
         this.bookGenre = book.genre;
         this.shortDescription = book.description;
         this.price = book.price;
-        this.bookImage = book.image;
+        this.bookImage = null;
         this.isEditing = true;
       } else {
         this.resetForm();
@@ -154,33 +178,30 @@ export default {
       this.isSubmitting = true;
 
       try {
-        let imageData = this.bookImage;
-        
-        if (this.bookImage instanceof File) {
-          imageData = await this.convertImageToBase64(this.bookImage);
-        }
-
         const bookData = {
           title: this.bookTitle,
           genre: this.bookGenre,
           description: this.shortDescription,
           price: parseFloat(this.price),
-          image: imageData || 'default-book-image.jpg',
+          image: this.bookImage, // Use the uploaded image URL
         };
 
-        if (this.isEditing) {
-          await axios.put(`${import.meta.env.VITE_API_NEW_URL}/books/${this.bookId}`, bookData);
+        if (this.isEditing && this.bookId) {
+          await this.$store.dispatch('updateBook', {
+            bookId: this.bookId,
+            bookData: bookData
+          });
           alert('Book updated successfully!');
         } else {
-          await axios.post(import.meta.env.VITE_API_NEW_URL+'/books', bookData);
+          await axios.post(`${import.meta.env.VITE_API_NEW_URL}/books`, bookData);
           alert('Book added successfully!');
         }
-        
+
         await this.fetchBooks();
         this.closeDialog();
       } catch (error) {
         console.error('Error saving book:', error);
-        alert(error.response?.data?.message || 'Failed to save book. Please try again.');
+        alert('Failed to save book. Please try again.');
       } finally {
         this.isSubmitting = false;
       }
@@ -197,14 +218,6 @@ export default {
       this.price = '';
       this.bookImage = null;
       this.isEditing = false;
-    },
-    convertImageToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-      });
     },
   },
   async created() {
