@@ -16,7 +16,7 @@
       </button>
       <div v-if="preview" class="mt-4">
         <h3>Preview:</h3>
-        <img :src="preview" alt="Image preview" class="w-36 h- object-cover rounded" />
+        <img :src="preview" alt="Image preview" class="w-36 h-32 object-cover rounded" />
       </div>
     </div>
   </template>
