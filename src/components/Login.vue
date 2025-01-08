@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-center min-h-screen bg-gray-100">
     <div class="max-w-md w-full shadow-lg bg-white p-6 rounded-md">
-      <h2 class="text-xl font-semibold text-gray-800 mb-4">Create an Account</h2>
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">LOGIN</h2>
 
       <!-- Form Section -->
       <div>
